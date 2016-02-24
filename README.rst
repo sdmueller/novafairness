@@ -1,4 +1,4 @@
-OpenStack Nova README
+OpenStack Nova with nova-fairness
 =====================
 
 OpenStack Nova provides a cloud computing fabric controller,
@@ -7,55 +7,31 @@ including KVM, Xen, LXC, VMware, and more. In addition to
 its native API, it includes compatibility with the commonly
 encountered Amazon EC2 and S3 APIs.
 
-OpenStack Nova is distributed under the terms of the Apache
-License, Version 2.0. The full terms and conditions of this
-license are detailed in the LICENSE file.
+The nova-fairness service adds a resource reallocation capability
+to nova compute that allows it to dynamically enforce fairness
+among cloud users during VM runtime by collecting runtime
+usage information of all VMs and calculating a resulting heaviness
+per user which is in turn used to prioritize users with lighter
+workloads by setting CPU shares, RAM soft-limits, disk weights and
+network priorities in their favor.
 
-Nova primarily consists of a set of Python daemons, though
-it requires and integrates with a number of native system
-components for databases, messaging and virtualization
-capabilities.
+To set up a development environment to work on the code in
+this repository, follow the installations steps outlined below:
 
-To keep updated with new developments in the OpenStack project
-follow `@openstack <http://twitter.com/openstack>`_ on Twitter.
+### Mac OS X
 
-To learn how to deploy OpenStack Nova, consult the documentation
-available online at:
+Clone the repository:
 
-   http://docs.openstack.org
+```
+git clone https://github.com/savf/novafairness.git
+```
 
-For information about the different compute (hypervisor) drivers
-supported by Nova, read this page on the wiki:
+Install *virtualenv* then run the *install_venv.py* Python script under *nova/tools*:
 
-   https://wiki.openstack.org/wiki/HypervisorSupportMatrix
+```
+sudo easy_install virtualenv
+python novafairness/nova/tools/install_venv.py
+```
 
-In the unfortunate event that bugs are discovered, they should
-be reported to the appropriate bug tracker. If you obtained
-the software from a 3rd party operating system vendor, it is
-often wise to use their own bug tracker for reporting problems.
-In all other cases use the master OpenStack bug tracker,
-available at:
-
-   http://bugs.launchpad.net/nova
-
-Developers wishing to work on the OpenStack Nova project should
-always base their work on the latest Nova code, available from
-the master GIT repository at:
-
-   https://git.openstack.org/cgit/openstack/nova
-
-Developers should also join the discussion on the mailing list,
-at:
-
-   http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
-
-Any new code must follow the development guidelines detailed
-in the HACKING.rst file, and pass all unit tests. Further
-developer focused documentation is available at:
-
-   http://docs.openstack.org/developer/nova/
-
-For information on how to contribute to Nova, please see the
-contents of the CONTRIBUTING.rst file.
-
--- End of broadcast
+To use the *virtualenv* in PyCharm, go to PyCharm -> Preferences -> Project -> Project Interpreter
+and click on the cog. Choose "Add Local" and navigate to *novafairness/.venv/bin/python_2.7*.
