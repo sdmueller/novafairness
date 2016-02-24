@@ -6,8 +6,8 @@ cat-proc-stat-cloud-supply: ReadFileFilter, /proc/stat
 cat-proc-cpuinfo-cloud-supply: ReadFileFilter, /proc/cpuinfo
 # nova/fairness/cloud_supply.py: lsblk -io KNAME,TYPE
 lsblk-cloud-supply: RegExpFilter, lsblk, root, lsblk, -io, (KNAME.TYPE)
-# nova/fairness/cloud_supply.py: free -b
-free-cloud-supply: RegExpFilter, free, root, free, -b
+# nova/fairness/cloud_supply.py: free -k
+free-cloud-supply: RegExpFilter, free, root, free, -k
 # nova/fairness/cloud_supply.py: hdparm -t /dev/*
 hdparm-cloud-supply: RegExpFilter, hdparm, root, hdparm, -t, /dev/[a-z]*[0-9]*
 # nova/fairness/resource_allocation.py: tc filter list dev eth0
