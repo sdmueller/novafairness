@@ -26,11 +26,11 @@ Clone the repository:
 git clone https://github.com/savf/novafairness.git
 ```
 
-Install *virtualenv* then run the *install_venv.py* Python script under *nova/tools*:
+Install *virtualenv* then run the *install_venv.py* Python script under *tools*:
 
 ```
 sudo easy_install virtualenv
-python novafairness/nova/tools/install_venv.py
+python novafairness/tools/install_venv.py
 ```
 
 To use the *virtualenv* in PyCharm, go to PyCharm -> Preferences -> Project -> Project Interpreter
