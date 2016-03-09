@@ -11,6 +11,8 @@ from nova.openstack.common import processutils
 from nova.virt import driver
 from nova.virt import virtapi
 
+import tc_wrapper
+
 resource_allocation_opts = [
     cfg.IntOpt('htb_rate',
                default='100',
@@ -383,7 +385,6 @@ class ResourceAllocation(object):
         ips = [self._find_domain_ip(d) for d in domains]
         domain_ip = self._find_domain_ip(domain)
         priority = self._convert_priority_range(priority, 1, 98)
-        result = True
 
         # find the IP of the instance in the filter output
         # the flowid is the class name, which is the same as
@@ -416,6 +417,13 @@ class ResourceAllocation(object):
         LOG.debug('New prios: %s', prios)
         LOG.debug('Priorities active for %d domains', active_prios)
 
+        # reset egress tc qdiscs
+        tc_wrapper.reset_qdisc(self.bridge_interface)
+
+        # add tc classes
+        result = tc_wrapper.hfsc_proportional_share(self.bridge_interface, prios, CONF.fairness.htb_rate)
+
+        """
         # reset egress tc qdiscs
         try:
             utils.execute('tc', 'qdisc', 'del', 'dev', self.bridge_interface,
@@ -467,7 +475,7 @@ class ResourceAllocation(object):
                                   'ip', 'src', ip, 'flowid', classid,
                                   run_as_root=True)
                 except processutils.ProcessExecutionError:
-                    result = False
+                    result = False"""
 
         return result
 
