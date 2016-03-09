@@ -45,7 +45,11 @@ def hfsc_proportional_share(interface, prios, upper_limit):
                       '%dmbit' % upper_limit, run_as_root=True)
     except processutils.ProcessExecutionError:
         result = False
-    
+
+    prio_sum = 0
+    for prio in prios:
+        prio_sum += prio
+
     # create child classes
     for prio in sorted(prios):
         classid = '1:%s' % prio
