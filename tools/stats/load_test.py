@@ -46,7 +46,7 @@ def _write_results(load, interval, instances, services):
     with open(csv_path + filename, 'a') as csv_file:
         csv_writer = csv.writer(csv_file)
         row = str(load) + "," + str(interval) + ","
-        for instance in instances.iteritems():
+        for instance_name, instance in instances.iteritems():
             cpu_time = int(instance['cpu_stop_time']) - int(instance['cpu_start_time'])
             row += str(cpu_time) + ","
         if 'nova-compute' in services:
@@ -91,7 +91,7 @@ def main():
         with open(csv_path + str(len(instances)) + "VM", 'w') as csv_file:
             csv_writer = csv.writer(csv_file)
             instances_string = ""
-            for instance_name, instance in instances:
+            for instance_name, instance in instances.iteritems():
                 instances_string += instance_name + ","
             csv_writer.writerow("LOAD", "INTERVAL_LENGTH," + instances_string + "NOVA_COMPUTE",
                                 "NOVA_NETWORK", "NOVA_API_METADATA", "NOVA_FAIRNESS")
@@ -121,16 +121,18 @@ def main():
     for interval in intervals:
         call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
               "/etc/nova/nova.conf"])
-        for service_name, service in services:
+        call(["service", "nova-fairness", "start"])
+        for service_name, service in services.iteritems():
             service['cpu_start_time'] = _get_cpu_time(service['pid'])
         for instance_name, instance in instances.iteritems():
             instance['cpu_start_time'] = _get_cpu_time(instance['pid'])
             if load:
                 Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "5s"])
         time.sleep(experiment_duration)
-        for service_name, service in services:
+        call(["service", "nova-fairness", "stop"])
+        for service_name, service in services.iteritems():
             service['cpu_stop_time'] = _get_cpu_time(service['pid'])
-        for instance in instances:
+        for instance_name, instance in instances.iteritems():
             instance['cpu_stop_time'] = _get_cpu_time(instance['pid'])
         _write_results(load, interval, instances, services)
 
