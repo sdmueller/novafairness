@@ -2,6 +2,7 @@ import csv
 import libvirt
 import os.path
 import re
+from subprocess import PIPE
 from subprocess import call
 from subprocess import check_output
 from subprocess import Popen
@@ -106,13 +107,13 @@ def main():
         services['nova-api-metadata'] = dict()
         services['nova-api-metadata']['pid'] = int(api_metadata_match.group(1))
 
-    intervals = [0, 1, 2, 4, 8, 16]
+    intervals = [-1, 1, 2, 4, 8, 16]
 
     for interval in intervals:
 
-        call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
-              "/etc/nova/nova.conf"])
-        call(["service", "nova-fairness", "start"])
+        sed_output = call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
+                          "/etc/nova/nova.conf"], stderr=PIPE, stdout=PIPE)
+        service_start_output = call(["service", "nova-fairness", "start"], stderr=PIPE, stdout=PIPE)
 
         ps = check_output(['ps', '-aux'])
         nova_fairness_pid = re.search(r'nova\s*(\d+).*/usr/bin/python /usr/bin/nova-fairness', ps)
@@ -122,6 +123,7 @@ def main():
             services['nova-fairness']['pid'] = int(nova_fairness_pid.group(1))
         # Wait a minute for the nova-fairness service to fully initialize
         time.sleep(60)
+        print "START EXPERIMENT WITH INTERVAL " + str(interval)
         for load in [False, True]:
             for service_name, service in services.iteritems():
                 service['cpu_start_time'] = _get_cpu_time(service['pid'])
@@ -129,14 +131,20 @@ def main():
                 instance['cpu_start_time'] = _get_cpu_time(instance['pid'])
             if load:
                 for instance_name, instance in instances.iteritems():
-                    Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "10s"])
+                    stress_output = Popen(["ssh", "-l", "ubuntu", instance['ip'],
+                                           "stress", "--cpu", "2", "-t", str(experiment_duration)],
+                                          stderr=PIPE, stdout=PIPE)
+                load_state = ""
+            else:
+                load_state = "OUT"
+            print "-- RUNNING " + str(experiment_duration) + " SECONDS WITH" + load_state + " LOAD"
             time.sleep(experiment_duration)
             for service_name, service in services.iteritems():
                 service['cpu_stop_time'] = _get_cpu_time(service['pid'])
             for instance_name, instance in instances.iteritems():
                 instance['cpu_stop_time'] = _get_cpu_time(instance['pid'])
-            _write_results(load, interval, instances, services)
-        call(["service", "nova-fairness", "stop"])
+            _write_results(interval, load, instances, services)
+        service_stop_output = call(["service", "nova-fairness", "stop"], stderr=PIPE, stdout=PIPE)
 
 if __name__ == '__main__':
     sys.exit(main())
