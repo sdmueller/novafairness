@@ -63,20 +63,15 @@ def _write_results(load, interval, instances, services):
 
 
 def _get_cpu_time(pid):
-    stats = check_output(['cat', '/proc/' + pid + '/stat'])
+    stats = check_output(['cat', '/proc/' + str(pid) + '/stat'])
     stats_array = stats.split(' ')
     return (float(stats_array[13]) + float(stats_array[14])) / 100
 
 
 def main():
-    params = sys.argv
-    if len(params) <= 1:
-        print "Usage python load_test.py LOAD(True/False)"
-        exit(1)
     conn = libvirt.open()
     domains = conn.listAllDomains()
     instances = dict()
-    load = bool(params[1])
 
     for domain in domains:
         if domain.isActive():
@@ -119,22 +114,23 @@ def main():
     intervals = [0, 1, 2, 4, 8, 16]
 
     for interval in intervals:
-        call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
-              "/etc/nova/nova.conf"])
-        call(["service", "nova-fairness", "start"])
-        for service_name, service in services.iteritems():
-            service['cpu_start_time'] = _get_cpu_time(service['pid'])
-        for instance_name, instance in instances.iteritems():
-            instance['cpu_start_time'] = _get_cpu_time(instance['pid'])
-            if load:
-                Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "5s"])
-        time.sleep(experiment_duration)
-        call(["service", "nova-fairness", "stop"])
-        for service_name, service in services.iteritems():
-            service['cpu_stop_time'] = _get_cpu_time(service['pid'])
-        for instance_name, instance in instances.iteritems():
-            instance['cpu_stop_time'] = _get_cpu_time(instance['pid'])
-        _write_results(load, interval, instances, services)
+        for load in [False, True]:
+            call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
+                  "/etc/nova/nova.conf"])
+            call(["service", "nova-fairness", "start"])
+            for service_name, service in services.iteritems():
+                service['cpu_start_time'] = _get_cpu_time(service['pid'])
+            for instance_name, instance in instances.iteritems():
+                instance['cpu_start_time'] = _get_cpu_time(instance['pid'])
+                if load:
+                    Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "5s"])
+            time.sleep(experiment_duration)
+            call(["service", "nova-fairness", "stop"])
+            for service_name, service in services.iteritems():
+                service['cpu_stop_time'] = _get_cpu_time(service['pid'])
+            for instance_name, instance in instances.iteritems():
+                instance['cpu_stop_time'] = _get_cpu_time(instance['pid'])
+            _write_results(load, interval, instances, services)
 
 if __name__ == '__main__':
     sys.exit(main())
