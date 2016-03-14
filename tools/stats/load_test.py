@@ -45,19 +45,19 @@ def _write_results(load, interval, instances, services):
     filename = str(len(instances)) + "VM"
     with open(csv_path + filename, 'a') as csv_file:
         csv_writer = csv.writer(csv_file)
-        row = str(load) + "," + str(interval) + ","
+        row = [str(load), str(interval)]
         for instance_name, instance in instances.iteritems():
             cpu_time = int(instance['cpu_stop_time']) - int(instance['cpu_start_time'])
-            row += str(cpu_time) + ","
+            row.append(str(cpu_time))
         if 'nova-compute' in services:
-            row += str(services['nova-compute']['cpu_stop_time'] - services['nova-compute']['cpu_start_time']) + ","
+            row.append(str(services['nova-compute']['cpu_stop_time'] - services['nova-compute']['cpu_start_time']))
         if 'nova-network' in services:
-            row += str(services['nova-network']['cpu_stop_time'] - services['nova-network']['cpu_start_time']) + ","
+            row.append(str(services['nova-network']['cpu_stop_time'] - services['nova-network']['cpu_start_time']))
         if 'nova-api-metadata' in services:
-            row += str(services['nova-api-metadata']['cpu_stop_time'] -
-                       services['nova-api-metadata']['cpu_start_time']) + ","
+            row.append(str(services['nova-api-metadata']['cpu_stop_time'] -
+                       services['nova-api-metadata']['cpu_start_time']))
         if 'nova-fairness' in services:
-            row += str(services['nova-fairness']['cpu_stop_time'] - services['nova-fairness']['cpu_start_time']) + ","
+            row.append(str(services['nova-fairness']['cpu_stop_time'] - services['nova-fairness']['cpu_start_time']))
         csv_writer.writerow(row)
         csv_file.close()
 
@@ -85,11 +85,11 @@ def main():
     if not os.path.isfile(csv_path + str(len(instances)) + "VM"):
         with open(csv_path + str(len(instances)) + "VM", 'w') as csv_file:
             csv_writer = csv.writer(csv_file)
-            instances_string = ""
+            row = ['LOAD', 'INTERVAL_LENGTH']
             for instance_name, instance in instances.iteritems():
-                instances_string += instance_name + ","
-            csv_writer.writerow("LOAD", "INTERVAL_LENGTH," + instances_string + "NOVA_COMPUTE",
-                                "NOVA_NETWORK", "NOVA_API_METADATA", "NOVA_FAIRNESS")
+                row.append(instance_name)
+            row += ['NOVA_COMPUTE', 'NOVA_NETWORK', 'NOVA_API_METADATA', 'NOVA_FAIRNESS']
+            csv_writer.writerow(row)
 
     # Get PIDs of nova services
     services = dict()
