@@ -11,8 +11,7 @@ from xml.dom import minidom
 
 
 csv_path = '/var/log/nova/fairness/'
-# interval length in seconds
-experiment_duration = 15
+experiment_duration = 10
 
 
 def _find_domain_ip(domain):
@@ -41,11 +40,11 @@ def _find_domain_ip(domain):
         return False
 
 
-def _write_results(load, interval, instances, services):
+def _write_results(interval, load, instances, services):
     filename = str(len(instances)) + "VM"
     with open(csv_path + filename, 'a') as csv_file:
         csv_writer = csv.writer(csv_file)
-        row = [str(load), str(interval)]
+        row = [str(experiment_duration), str(interval), str(load)]
         for instance_name, instance in instances.iteritems():
             cpu_time = int(instance['cpu_stop_time']) - int(instance['cpu_start_time'])
             row.append(str(cpu_time))
@@ -85,7 +84,7 @@ def main():
     if not os.path.isfile(csv_path + str(len(instances)) + "VM"):
         with open(csv_path + str(len(instances)) + "VM", 'w') as csv_file:
             csv_writer = csv.writer(csv_file)
-            row = ['LOAD', 'INTERVAL_LENGTH']
+            row = ['EXPERIMENT_DURATION', 'INTERVAL_LENGTH', 'LOAD']
             for instance_name, instance in instances.iteritems():
                 row.append(instance_name)
             row += ['NOVA_COMPUTE', 'NOVA_NETWORK', 'NOVA_API_METADATA', 'NOVA_FAIRNESS']
@@ -106,31 +105,38 @@ def main():
     if api_metadata_match:
         services['nova-api-metadata'] = dict()
         services['nova-api-metadata']['pid'] = int(api_metadata_match.group(1))
-    fairness_match = re.search(r'nova\s*(\d+).*/usr/bin/python /usr/bin/nova-fairness', ps)
-    if fairness_match:
-        services['nova-fairness'] = dict()
-        services['nova-fairness']['pid'] = int(fairness_match.group(1))
 
     intervals = [0, 1, 2, 4, 8, 16]
 
     for interval in intervals:
+
+        call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
+              "/etc/nova/nova.conf"])
+        call(["service", "nova-fairness", "start"])
+
+        ps = check_output(['ps', '-aux'])
+        nova_fairness_pid = re.search(r'nova\s*(\d+).*/usr/bin/python /usr/bin/nova-fairness', ps)
+        if nova_fairness_pid:
+            if 'nova_fairness' not in services:
+                services['nova-fairness'] = dict()
+            services['nova-fairness']['pid'] = int(nova_fairness_pid.group(1))
+        # Wait a minute for the nova-fairness service to fully initialize
+        time.sleep(60)
         for load in [False, True]:
-            call(["sed", "-i", "s/rui_collection_interval=.*/rui_collection_interval=" + str(interval) + "/g",
-                  "/etc/nova/nova.conf"])
-            call(["service", "nova-fairness", "start"])
             for service_name, service in services.iteritems():
                 service['cpu_start_time'] = _get_cpu_time(service['pid'])
             for instance_name, instance in instances.iteritems():
                 instance['cpu_start_time'] = _get_cpu_time(instance['pid'])
-                if load:
-                    Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "5s"])
+            if load:
+                for instance_name, instance in instances.iteritems():
+                    Popen(["ssh", "-l", "ubuntu", instance['ip'], "stress", "--cpu", "2", "-t", "10s"])
             time.sleep(experiment_duration)
-            call(["service", "nova-fairness", "stop"])
             for service_name, service in services.iteritems():
                 service['cpu_stop_time'] = _get_cpu_time(service['pid'])
             for instance_name, instance in instances.iteritems():
                 instance['cpu_stop_time'] = _get_cpu_time(instance['pid'])
             _write_results(load, interval, instances, services)
+        call(["service", "nova-fairness", "stop"])
 
 if __name__ == '__main__':
     sys.exit(main())
