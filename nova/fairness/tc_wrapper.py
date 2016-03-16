@@ -42,6 +42,7 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     try:
         utils.execute('tc', 'class', 'add', 'dev', interface,
                       'parent', '1:', 'classid', '1:99', 'hfsc', 'sc',
+                      'rate', '%dmbit' % upper_limit, 'ul', 'rate',
                       '%dmbit' % upper_limit, run_as_root=True)
     except processutils.ProcessExecutionError:
         result = False
