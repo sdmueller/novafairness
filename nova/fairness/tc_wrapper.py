@@ -22,11 +22,16 @@ from nova.openstack.common import processutils
             match ip src 10.0.0.2 flowid 1:1
     """
 
+# TODO check if qdiscs not already the same, if yes don't delete and set up again
+
+# TODO interface is hardcoded for now as resource_allocation method does not account for the specific configuration in use
 def hfsc_proportional_share(interface, prios, upper_limit):
     """
 
     :rtype: bool
     """
+
+    interface = 'eth0'
 
     result = True
 
@@ -78,6 +83,8 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     return result
 
 def reset_qdisc(interface):
+    interface = 'eth0'
+    
     try:
         utils.execute('tc', 'qdisc', 'del', 'dev', interface,
                       'root', run_as_root=True)
