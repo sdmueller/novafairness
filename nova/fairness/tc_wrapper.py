@@ -36,7 +36,7 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     # add root qdisc
     try:
         utils.execute('tc', 'qdisc', 'add', 'dev', interface,
-                      'root', 'handle', '1:', 'hfsc', run_as_root=True)
+                      'root', 'handle', '1:', 'hfsc', 'default', prios[0], run_as_root=True)
     except processutils.ProcessExecutionError:
         result = False
 
