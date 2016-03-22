@@ -33,10 +33,16 @@ def hfsc_proportional_share(interface, prios, upper_limit):
 
     result = True
 
+    default_class = 99
+    prio_sum = 0
+    for prio in prios:
+        prio_sum += prio
+        default_class = prio
+
     # add root qdisc
     try:
         utils.execute('tc', 'qdisc', 'add', 'dev', interface,
-                      'root', 'handle', '1:', 'hfsc', 'default', prios[0], run_as_root=True)
+                      'root', 'handle', '1:', 'hfsc', 'default', default_class, run_as_root=True)
     except processutils.ProcessExecutionError:
         result = False
 
@@ -50,9 +56,6 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     except processutils.ProcessExecutionError:
         result = False
 
-    prio_sum = 0
-    for prio in prios:
-        prio_sum += prio
 
     # create child classes
     for prio in sorted(prios):
