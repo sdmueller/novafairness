@@ -31,8 +31,6 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     :rtype: bool
     """
 
-    interface = 'eth0'
-
     result = True
 
     # add root qdisc
@@ -83,8 +81,6 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     return result
 
 def reset_qdisc(interface):
-    interface = 'eth0'
-    
     try:
         utils.execute('tc', 'qdisc', 'del', 'dev', interface,
                       'root', run_as_root=True)

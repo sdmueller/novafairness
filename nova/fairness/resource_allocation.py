@@ -490,6 +490,8 @@ class ResourceAllocation(object):
             if m:
                 iface = m.group(2)
 
+        iface = 'eth0'
+
         return iface
 
     @staticmethod
