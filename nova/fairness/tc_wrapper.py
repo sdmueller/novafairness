@@ -37,7 +37,7 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     prio_sum = 0
     for prio in prios:
         prio_sum += prio
-        default_class = prio
+        default_class = 1
 
     # add root qdisc
     try:
@@ -56,7 +56,7 @@ def hfsc_proportional_share(interface, prios, upper_limit):
     except processutils.ProcessExecutionError:
         result = False
 
-
+    """
     # create child classes
     for prio in sorted(prios):
         classid = '1:%s' % prio
@@ -80,6 +80,57 @@ def hfsc_proportional_share(interface, prios, upper_limit):
                               classid, run_as_root=True)
             except processutils.ProcessExecutionError:
                 result = False
+    """
+
+    try:
+        utils.execute('tc', 'class', 'add', 'dev', interface,
+                      'parent', '1:99', 'classid', '1:1', 'hfsc', 'ls',
+                      'rate', '50mbit', 'ul', 'rate', '100mbit',
+                      run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+    try:
+        utils.execute('tc', 'class', 'add', 'dev', interface,
+                      'parent', '1:99', 'classid', '1:2', 'hfsc', 'ls',
+                      'rate', '30mbit', 'ul', 'rate', '100mbit',
+                      run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+    try:
+        utils.execute('tc', 'class', 'add', 'dev', interface,
+                      'parent', '1:99', 'classid', '1:3', 'hfsc', 'ls',
+                      'rate', '10mbit', 'ul', 'rate', '100mbit',
+                      run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+    try:
+        utils.execute('tc', 'filter', 'add', 'dev', interface,
+                      'parent', '1:', 'protocol', 'ip', 'prio', '1',
+                      'u32', 'match', 'ip', 'src', '10.0.100.2', 'flowid',
+                      '1:1', run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+    try:
+        utils.execute('tc', 'filter', 'add', 'dev', interface,
+                      'parent', '1:', 'protocol', 'ip', 'prio', '1',
+                      'u32', 'match', 'ip', 'src', '10.0.100.3', 'flowid',
+                      '1:2', run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+    try:
+        utils.execute('tc', 'filter', 'add', 'dev', interface,
+                      'parent', '1:', 'protocol', 'ip', 'prio', '1',
+                      'u32', 'match', 'ip', 'src', '10.0.100.4', 'flowid',
+                      '1:3', run_as_root=True)
+    except processutils.ProcessExecutionError:
+        result = False
+
+
 
     return result
 
