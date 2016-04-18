@@ -15,18 +15,6 @@ tc-list-resource-allocation: RegExpFilter, tc, root, tc, filter, list, dev, [a-z
 
 ## HFSC ##
 # nova/fairness/tc_wrapper.py: tc qdisc del dev eth0 root
-#tc-qdisc-del-resource-allocation: RegExpFilter, tc, root, tc, qdisc, del, dev, [a-z]*[0-9]*, root
-# nova/fairness/tc_wrapper.py: tc qdisc add dev eth0 root handle 1: hfsc
-#tc: RegExpFilter, tc, root, tc, qdisc, add, dev, [a-z]*[0-9]*, root, handle, 1:, hfsc
-# nova/fairness/tc_wrapper.py: tc class add dev eth0 parent 1: classid 1:99 hfsc sc rate 80mbit ul rate 80mbit
-#tc: RegExpFilter, tc, root, tc, class, add, dev, [a-z]*[0-9]*, parent, 1:, classid, 1:99, hfsc, sc, rate, [0-9]*mbit, ul, rate, [0-9]*mbit
-# nova/fairness/tc_wrapper.py: tc class add dev eth0 parent 1:99 classid 1:3 hfsc ls rate 15mbit ul rate 80mbit
-#tc: RegExpFilter, tc, root, tc, class, add, dev, [a-z]*[0-9]*, parent, 1:99, classid, 1:[0-9]*, hfsc, ls, rate, [0-9]*mbit, ul, rate, [0-9]*mbit
-# nova/fairness/tc_wrapper.py: tc filter add dev eth0 parent 1: protocol ip prio 1 u32 match ip src 10.0.0.2 flowid 1:1
-#tc: RegExpFilter, tc, root, tc, filter, add, dev, [a-z]*[0-9]*, parent, 1:, protocol, ip, prio, 1, u32, match, ip, src, [0-9]*.[0-9]*.[0-9]*.[0-9]*, flowid, 1:[0-9]*
-
-## HFSC Test ##
-# nova/fairness/tc_wrapper.py: tc qdisc del dev eth0 root
 tc-qdisc-del-resource-allocation: RegExpFilter, tc, root, tc, qdisc, del, dev, [a-z]*[0-9]*, root
 # nova/fairness/tc_wrapper.py: tc qdisc add dev eth0 root handle 1: hfsc default 52
 tc-qdisc-add-resource-allocation: RegExpFilter, tc, root, tc, qdisc, add, dev, [a-z]*[0-9]*, root, handle, 1:, hfsc, default, [0-9]*
